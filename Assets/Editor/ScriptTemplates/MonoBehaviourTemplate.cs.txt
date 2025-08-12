@@ -18,7 +18,7 @@ namespace #ROOTNAMESPACE#
     // [RequireComponent(typeof(XXX))]
     // [DefaultExecutionOrder(0)]
     [AddComponentMenu("Game/#SCRIPTNAME#")]
-    public class #SCRIPTNAME# : MonoBehaviour
+    public partial class #SCRIPTNAME# : MonoBehaviour
     {
         // =====================================
         // # Fields (Serialized / Private)
