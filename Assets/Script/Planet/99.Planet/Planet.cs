@@ -54,6 +54,8 @@ namespace SpaceWorker
         // =====================================
         // # Unity Messages
         // =====================================
+
+        /// <summary>피벗/메쉬/머티리얼 등 런타임 의존 리소스를 구성한다.</summary>
         private void Awake()
         {
 
@@ -75,6 +77,8 @@ namespace SpaceWorker
 
             Log("[Awake] 초기화 시작");
         }
+
+        /// <summary>초당 각속도를 계산해 1프레임 분 공전/자전을 적용한다.</summary>
         private void Start()
         {
             float dayPerSec = 1f;
@@ -83,6 +87,14 @@ namespace SpaceWorker
         }
         private void OnEnable() { }
         private void OnDisable() { }
+        /// <summary>
+        /// 매 프레임 행성의 공전/자전 상태를 업데이트한다.
+        /// </summary>
+        /// <remarks>
+        /// - Start()에서 계산된 초당 회전 각도(_orbitDegPerSec, _rotationDegPerSec)를 기반으로 함.
+        /// - 공전은 월드 좌표계 Y축, 자전은 로컬 좌표계 Y축 기준.
+        /// - pivot이 null이면 공전은 생략.
+        /// </remarks>
         private void Update()
         {
             if (pivot != null)
