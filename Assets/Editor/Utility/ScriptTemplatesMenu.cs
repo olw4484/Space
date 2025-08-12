@@ -1,13 +1,3 @@
-/// <summary>
-/// 유니티 에디터에서 커스텀 스크립트 템플릿을 기반으로
-/// MonoBehaviour 또는 ScriptableObject 스크립트를 안전하게 생성하는 유틸 클래스.
-/// </summary>
-/// <remarks>
-/// - 템플릿 파일(.cs.txt)은 반드시 <c>Assets/Editor/ScriptTemplates</c> 폴더에 위치해야 합니다.
-/// - <c>#SCRIPTNAME#</c> 및 <c>#ROOTNAMESPACE#</c> 토큰을 치환합니다.
-/// - 네임스페이스 결정 우선순위: 가장 가까운 asmdef의 <c>rootNamespace</c> → Project Settings → <c>DEFAULT_NAMESPACE</c>.
-/// - <c>ProjectWindowUtil.StartNameEditingIfProjectWindowExists</c> 사용 시 이름 편집 콜백을 위해 내부 더미 클래스를 제공합니다.
-/// </remarks>
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
@@ -15,29 +5,33 @@ using System.IO;
 using System.Linq;
 using System;
 
+/// <summary>
+/// 유니티 에디터에서 커스텀 스크립트 템플릿을 기반으로
+/// MonoBehaviour, ScriptableObject, Partial 클래스 파일을 안전하게 생성하는 유틸 클래스.
+/// </summary>
+/// <remarks>
+/// - 템플릿 파일(.cs.txt)은 반드시 <c>Assets/Editor/ScriptTemplates</c> 폴더에 위치해야 합니다.
+/// - <c>#SCRIPTNAME#</c> 및 <c>#ROOTNAMESPACE#</c> 토큰을 치환합니다.
+/// - 네임스페이스 결정 우선순위:
+///   1) 가장 가까운 asmdef의 rootNamespace
+///   2) Project Settings → Root Namespace
+///   3) DEFAULT_NAMESPACE 상수
+/// </remarks>
 public static class SafeScriptCreator
 {
-    /// <summary>
-    /// 프로젝트 로컬 템플릿 폴더 경로.
-    /// </summary>
+    /// <summary>프로젝트 로컬 템플릿 폴더 경로.</summary>
     private const string TEMPLATE_DIR = "Assets/Editor/ScriptTemplates";
 
-    /// <summary>
-    /// MonoBehaviour 템플릿 파일 경로(.cs.txt).
-    /// </summary>
+    /// <summary>MonoBehaviour 템플릿 파일 경로(.cs.txt).</summary>
     private const string MONO_TEMPLATE = TEMPLATE_DIR + "/MonoBehaviourTemplate.cs.txt";
 
-    /// <summary>
-    /// ScriptableObject 템플릿 파일 경로(.cs.txt).
-    /// </summary>
+    /// <summary>ScriptableObject 템플릿 파일 경로(.cs.txt).</summary>
     private const string SO_TEMPLATE = TEMPLATE_DIR + "/ScriptableObjectTemplate.cs.txt";
 
-    /// <summary>
-    /// rootNamespace가 비어있을 때 사용할 기본 네임스페이스.
-    /// </summary>
+    /// <summary>rootNamespace가 비어있을 때 사용할 기본 네임스페이스.</summary>
     private const string DEFAULT_NAMESPACE = "DefaultNamespace";
 
-    // =============== 메뉴 ===============
+    // ======================= 메뉴 =======================
 
     /// <summary>
     /// MonoBehaviour 템플릿으로 새 스크립트를 생성합니다.
@@ -53,10 +47,11 @@ public static class SafeScriptCreator
     public static void CreateSO()
         => CreateFromTemplate(SO_TEMPLATE, "NewScriptableObject.cs");
 
-    // =============== 본체 ===============
+    // ======================= 본체 =======================
 
     /// <summary>
-    /// 템플릿을 읽어 클래스명/네임스페이스 토큰을 치환한 뒤 새 스크립트를 생성합니다.
+    /// 지정한 템플릿 파일을 읽어 클래스명/네임스페이스를 치환한 후,
+    /// 지정한 경로에 새 C# 스크립트를 생성합니다.
     /// </summary>
     /// <param name="templatePath">템플릿 파일 경로(.cs.txt)</param>
     /// <param name="defaultName">기본 생성 파일명(확장자 포함)</param>
@@ -72,12 +67,12 @@ public static class SafeScriptCreator
             return;
         }
 
-        // 생성 위치/이름
+        // 생성 위치/이름 결정
         string targetDir = GetSelectedPathOrAssets();
         string outPath = Path.Combine(targetDir, defaultName).Replace("\\", "/");
         string className = Path.GetFileNameWithoutExtension(outPath);
 
-        // 템플릿 로드 & 치환
+        // 템플릿 로드 및 토큰 치환
         string txt = File.ReadAllText(templatePath);
         string rootNs = ResolveRootNamespace(targetDir);
 
@@ -87,16 +82,13 @@ public static class SafeScriptCreator
         File.WriteAllText(outPath, txt);
         AssetDatabase.Refresh();
         Selection.activeObject = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(outPath);
-
-        // 이름 즉시 편집 모드 진입이 필요할 때:
-        // ProjectWindowUtil.StartNameEditingIfProjectWindowExists(
-        //     0, ScriptableObject.CreateInstance<DoNothingAction>(), outPath, null, null
-        // );
     }
 
     /// <summary>
-    /// 현재 선택된 에셋이 폴더라면 그 경로를, 파일이라면 부모 폴더 경로를 반환합니다.
-    /// 선택이 없으면 <c>Assets</c>를 반환합니다.
+    /// 현재 선택된 경로를 반환합니다.
+    /// - 폴더를 선택한 경우 해당 폴더 경로를 반환
+    /// - 파일을 선택한 경우 해당 파일의 부모 폴더 경로를 반환
+    /// - 선택이 없는 경우 "Assets"를 반환
     /// </summary>
     private static string GetSelectedPathOrAssets()
     {
@@ -113,10 +105,10 @@ public static class SafeScriptCreator
     }
 
     /// <summary>
-    /// 네임스페이스를 결정합니다. 가까운 asmdef의 <c>rootNamespace</c>가 있으면 우선 사용하고,
-    /// 없으면 Project Settings의 Root Namespace를 사용하며, 둘 다 없거나 무효면 기본값을 반환합니다.
+    /// 지정된 폴더를 기준으로 네임스페이스를 결정합니다.
     /// </summary>
-    /// <param name="folder">생성 대상 폴더 경로</param>
+    /// <param name="folder">검색 기준 폴더 경로</param>
+    /// <returns>네임스페이스 문자열</returns>
     private static string ResolveRootNamespace(string folder)
     {
         // 1) 가까운 asmdef
@@ -127,8 +119,8 @@ public static class SafeScriptCreator
             if (IsValidNamespace(rn)) return rn;
         }
 
-        // 2) Project Settings 값
-        var projectNs = EditorSettings.projectGenerationRootNamespace; // 2022/6000 공통
+        // 2) Project Settings
+        var projectNs = EditorSettings.projectGenerationRootNamespace;
         if (IsValidNamespace(projectNs)) return projectNs;
 
         // 3) 기본값
@@ -136,10 +128,8 @@ public static class SafeScriptCreator
     }
 
     /// <summary>
-    /// 주어진 폴더에서 상위로 거슬러 올라가며 가장 가까운 <c>.asmdef</c> 파일을 찾습니다.
+    /// 주어진 폴더에서 상위로 탐색하며 가장 가까운 .asmdef 파일 경로를 반환합니다.
     /// </summary>
-    /// <param name="folder">검색 시작 폴더</param>
-    /// <returns>asmdef 파일 경로 또는 null</returns>
     private static string FindNearestAsmdef(string folder)
     {
         folder = folder.Replace("\\", "/");
@@ -152,7 +142,6 @@ public static class SafeScriptCreator
             var parent = Directory.GetParent(folder);
             if (parent == null) break;
 
-            // Assets 루트 밖으로 나가면 중단
             if (!parent.FullName.Replace("\\", "/").Contains("/Assets")) break;
             folder = parent.FullName.Replace("\\", "/");
         }
@@ -160,8 +149,7 @@ public static class SafeScriptCreator
     }
 
     /// <summary>
-    /// asmdef JSON에서 <c>rootNamespace</c> 값을 읽어옵니다.
-    /// 파싱 실패 시 빈 문자열을 반환합니다.
+    /// asmdef JSON에서 rootNamespace 값을 읽어옵니다.
     /// </summary>
     private static string ReadAsmdefRootNamespace(string asmdefPath)
     {
@@ -178,8 +166,7 @@ public static class SafeScriptCreator
     }
 
     /// <summary>
-    /// C# 네임스페이스로서 유효한지 간단 규칙으로 검사합니다.
-    /// 문자/밑줄 시작, 이후 문자/숫자/밑줄 허용, <c>.</c> 구분 허용.
+    /// 문자열이 유효한 C# 네임스페이스인지 검사합니다.
     /// </summary>
     private static bool IsValidNamespace(string ns)
     {
@@ -197,31 +184,51 @@ public static class SafeScriptCreator
     }
 
     /// <summary>
-    /// 이름 편집 후 추가 작업을 위해 필요한 더미 콜백 클래스입니다.
-    /// 현재는 기능이 없으며, 필요 시 <see cref="Action"/> 내부에 후처리를 구현하세요.
+    /// MonoBehaviour + partial Editor 스크립트를 동시에 생성합니다.
+    /// </summary>
+    private static void CreateMonoWithPartial()
+    {
+        string baseTemplate = TEMPLATE_DIR + "/MonoTemplate.cs.txt";
+        string editorTemplate = TEMPLATE_DIR + "/MonoTemplate.Editor.cs.txt";
+
+        string targetDir = GetSelectedPathOrAssets();
+        string basePath = Path.Combine(targetDir, "NewScript.cs").Replace("\\", "/");
+        string editorPath = basePath.Replace(".cs", ".Editor.cs");
+
+        string className = Path.GetFileNameWithoutExtension(basePath);
+        string rootNs = ResolveRootNamespace(targetDir);
+
+        File.WriteAllText(basePath,
+            File.ReadAllText(baseTemplate)
+                .Replace("#SCRIPTNAME#", className)
+                .Replace("#ROOTNAMESPACE#", rootNs));
+
+        File.WriteAllText(editorPath,
+            File.ReadAllText(editorTemplate)
+                .Replace("#SCRIPTNAME#", className)
+                .Replace("#ROOTNAMESPACE#", rootNs));
+
+        AssetDatabase.Refresh();
+    }
+
+    /// <summary>
+    /// 이름 편집 후 추가 작업을 처리하는 더미 클래스.
+    /// 현재는 단순히 partial 생성 메서드를 호출합니다.
     /// </summary>
     private class DoNothingAction : UnityEditor.ProjectWindowCallback.EndNameEditAction
     {
-        /// <summary>
-        /// 이름 편집 완료 시 호출됩니다. 현재는 로그만 출력합니다.
-        /// </summary>
-        /// <param name="instanceId">인스턴스 ID</param>
-        /// <param name="pathName">최종 경로(파일명 포함)</param>
-        /// <param name="resourceFile">리소스 파일 경로(템플릿)</param>
         public override void Action(int instanceId, string pathName, string resourceFile)
         {
             string newName = Path.GetFileNameWithoutExtension(pathName);
+            CreateMonoWithPartial();
             Debug.Log($"새 파일 이름: {newName}");
         }
     }
 
-    /// <summary>
-    /// asmdef JSON 역직렬화를 위한 최소 구조체.
-    /// </summary>
+    /// <summary>asmdef JSON 역직렬화를 위한 최소 구조체.</summary>
     [Serializable]
     private class AsmdefJson
     {
-        /// <summary>asmdef의 rootNamespace 값.</summary>
         public string rootNamespace;
     }
 }
