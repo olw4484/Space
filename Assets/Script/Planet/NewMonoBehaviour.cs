@@ -1,5 +1,5 @@
 // ================================
-// Project : #ROOTNAMESPACE#
+// Project : SpaceWorker
 // Script  : NewMonoBehaviour.cs
 // Desc    : (TODO: 스크립트 한 줄 설명)
 // Author  : (TODO: 이름/이니셜)
@@ -8,7 +8,7 @@
 
 using UnityEngine;
 
-namespace #ROOTNAMESPACE#
+namespace SpaceWorker
 {
     /// <summary>
     /// NewMonoBehaviour
@@ -28,7 +28,7 @@ namespace #ROOTNAMESPACE#
         [SerializeField] private bool _enableLog = true;
 
         [Header("참조")]
-        // [SerializeField] private Transform _pivot;
+        [SerializeField] private Transform _pivot;
 
         // =====================================
         // # Properties (public / readonly)

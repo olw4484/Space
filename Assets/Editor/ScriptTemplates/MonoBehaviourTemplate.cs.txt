@@ -28,7 +28,7 @@ namespace #ROOTNAMESPACE#
         [SerializeField] private bool _enableLog = true;
 
         [Header("참조")]
-        // [SerializeField] private Transform _pivot;
+        [SerializeField] private Transform _pivot;
 
         // =====================================
         // # Properties (public / readonly)
