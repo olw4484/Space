@@ -1,0 +1,104 @@
+// ================================
+// Project : #ROOTNAMESPACE#
+// Script  : #SCRIPTNAME#.cs
+// Desc    : (TODO: 스크립트 한 줄 설명)
+// Author  : (TODO: 이름/이니셜)
+// Note    : 팀 컨벤션 준수 - 필드/메서드 구간 주석, 한글 주석
+// ================================
+
+using UnityEngine;
+
+namespace #ROOTNAMESPACE#
+{
+    /// <summary>
+    /// #SCRIPTNAME#
+    /// - (TODO: 핵심 역할을 2~3줄로 서술)
+    /// </summary>
+    [DisallowMultipleComponent]
+    // [RequireComponent(typeof(XXX))]
+    // [DefaultExecutionOrder(0)]
+    [AddComponentMenu("Game/#SCRIPTNAME#")]
+    public class #SCRIPTNAME# : MonoBehaviour
+    {
+        // =====================================
+        // # Fields (Serialized / Private)
+        // =====================================
+
+        [Header("설정")]
+        [SerializeField] private bool _enableLog = true;
+
+        [Header("참조")]
+        // [SerializeField] private Transform _pivot;
+
+        // =====================================
+        // # Properties (public / readonly)
+        // =====================================
+
+        // public bool IsActive => isActiveAndEnabled;
+
+        // =====================================
+        // # Unity Messages (Order: Awake -> Start -> OnEnable -> OnDisable -> Update)
+        // =====================================
+
+        private void Reset()
+        {
+            // TODO: 초기값 세팅 (에디터에서 Add Component 시 호출)
+        }
+
+        private void Awake()
+        {
+            Log("[Awake] 초기화 시작");
+            // TODO: 캐시/DI 등
+        }
+
+        private void Start()
+        {
+            // TODO: 런타임 초기 로직
+        }
+
+        private void OnEnable()
+        {
+            // TODO: 이벤트 구독, 상태 초기화
+        }
+
+        private void OnDisable()
+        {
+            // TODO: 이벤트 구독 해제
+        }
+
+        private void Update()
+        {
+            // TODO: 프레임 업데이트
+        }
+
+        // (필요시) FixedUpdate / LateUpdate 자리
+        // private void FixedUpdate() { }
+        // private void LateUpdate() { }
+
+        private void OnDestroy()
+        {
+            // TODO: 리소스 정리
+        }
+
+        // =====================================
+        // # Public Methods
+        // =====================================
+
+        // public void Initialize(...) { }
+
+        // =====================================
+        // # Internal Methods
+        // =====================================
+
+        // =====================================
+        // # Private Methods
+        // =====================================
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        private void Log(object msg)
+        {
+            if (_enableLog)
+                Debug.Log($"[#SCRIPTNAME#] {msg}", this);
+        }
+    }
+}
