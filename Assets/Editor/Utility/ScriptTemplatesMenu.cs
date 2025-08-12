@@ -1,9 +1,10 @@
 #if UNITY_EDITOR
-using UnityEditor;
-using UnityEngine;
+using System;
 using System.IO;
 using System.Linq;
-using System;
+using System.Text;
+using UnityEditor;
+using UnityEngine;
 
 /// <summary>
 /// 유니티 에디터에서 커스텀 스크립트 템플릿을 기반으로
@@ -25,20 +26,85 @@ public static class SafeScriptCreator
     /// <summary>MonoBehaviour 템플릿 파일 경로(.cs.txt).</summary>
     private const string MONO_TEMPLATE = TEMPLATE_DIR + "/MonoBehaviourTemplate.cs.txt";
 
+    /// <summary>MonoTemplate 템플릿 파일 경로(.cs.txt).</summary>
+    private const string MONO_PARTIAL_TEMPLATE = TEMPLATE_DIR + "/MonoTemplate.Editor.cs.txt";         // 에디터 전용 partial
+
     /// <summary>ScriptableObject 템플릿 파일 경로(.cs.txt).</summary>
     private const string SO_TEMPLATE = TEMPLATE_DIR + "/ScriptableObjectTemplate.cs.txt";
 
     /// <summary>rootNamespace가 비어있을 때 사용할 기본 네임스페이스.</summary>
     private const string DEFAULT_NAMESPACE = "DefaultNamespace";
 
+    /// <summary>EditorTestConfig 템플릿 파일 경로(.cs.txt).</summary>
+    private const string EDITOR_CONFIG_PATH = "Assets/Editor/EditorTestConfig.cs";
+
+    /// <summary>EditorTestConfig 템플릿 (UTF-8 BOM로 저장 예정)</summary>
+    private const string EDITOR_CONFIG_TEMPLATE = @"#if UNITY_EDITOR
+namespace #ROOTNAMESPACE#
+{
+    /// <summary>
+    /// 에디터 전용 테스트 코드들의 전역 On/Off 스위치.
+    /// </summary>
+    public static class EditorTestConfig
+    {
+        /// <summary>true면 에디터 테스트 코드 실행.</summary>
+        public static bool Enabled = true;
+    }
+}
+#endif
+";
+
     // ======================= 메뉴 =======================
 
     /// <summary>
+    /// EditorTestConfig 스크립트를 생성합니다(최초 1회). 
+    /// Assets/Editor/EditorTestConfig.cs 로 생성되며, UTF-8 BOM으로 저장됩니다.
+    /// </summary>
+    [MenuItem("Assets/Create/CustomScript/Create EditorTestConfig", false, 50)]
+    public static void CreateEditorTestConfig()
+    {
+        // 현재 Project 창에서 선택한 폴더 경로
+        string targetDir = GetSelectedPathOrAssets();
+        if (!Directory.Exists(targetDir))
+            Directory.CreateDirectory(targetDir);
+
+        string configPath = Path.Combine(targetDir, "EditorTestConfig.cs").Replace("\\", "/");
+
+        if (File.Exists(configPath))
+        {
+            EditorUtility.DisplayDialog("Already Exists", "이미 EditorTestConfig.cs가 존재합니다.", "OK");
+            return;
+        }
+
+        string ns = ResolveRootNamespace(targetDir);
+        if (string.IsNullOrWhiteSpace(ns)) ns = DEFAULT_NAMESPACE;
+
+        var content = EDITOR_CONFIG_TEMPLATE.Replace("#ROOTNAMESPACE#", ns);
+        WriteAllTextUtf8Bom(configPath, content);
+
+        AssetDatabase.Refresh();
+        EditorUtility.DisplayDialog("Done", $"EditorTestConfig.cs 생성 완료!\n{configPath}", "OK");
+        Debug.Log($"[Create] {configPath}");
+    }
+
+    /// <summary>
     /// MonoBehaviour 템플릿으로 새 스크립트를 생성합니다.
+    /// (이름 편집 완료 후, 본 클래스와 Editor partial를 함께 생성)
     /// </summary>
     [MenuItem("Assets/Create/CustomScript/MonoBehaviour (safe)", false, 1)]
     public static void CreateMono()
-        => CreateFromTemplate(MONO_TEMPLATE, "NewMonoBehaviour.cs");
+    {
+        string targetDir = GetSelectedPathOrAssets();
+        string suggestedPath = Path.Combine(targetDir, "NewMonoBehaviour.cs").Replace("\\", "/");
+
+        ProjectWindowUtil.StartNameEditingIfProjectWindowExists(
+            0,
+            ScriptableObject.CreateInstance<CreateMonoWithPartialAction>(),
+            suggestedPath,
+            null,
+            MONO_TEMPLATE // 참고용 전달(필수는 아님)
+        );
+    }
 
     /// <summary>
     /// ScriptableObject 템플릿으로 새 스크립트를 생성합니다.
@@ -186,29 +252,62 @@ public static class SafeScriptCreator
     /// <summary>
     /// MonoBehaviour + partial Editor 스크립트를 동시에 생성합니다.
     /// </summary>
-    private static void CreateMonoWithPartial()
+    // ======================= 콜백: 이름 확정 후 두 파일 생성 =======================
+
+    private class CreateMonoWithPartialAction : UnityEditor.ProjectWindowCallback.EndNameEditAction
     {
-        string baseTemplate = TEMPLATE_DIR + "/MonoTemplate.cs.txt";
-        string editorTemplate = TEMPLATE_DIR + "/MonoTemplate.Editor.cs.txt";
+        public override void Action(int instanceId, string pathName, string resourceFile)
+        {
+            // 최종 경로/이름
+            string basePath = pathName.Replace("\\", "/");                 // ex) Assets/Scripts/Foo.cs
+            string dir = Path.GetDirectoryName(basePath).Replace("\\", "/");
+            string className = Path.GetFileNameWithoutExtension(basePath);
 
-        string targetDir = GetSelectedPathOrAssets();
-        string basePath = Path.Combine(targetDir, "NewScript.cs").Replace("\\", "/");
-        string editorPath = basePath.Replace(".cs", ".Editor.cs");
+            // Editor 폴더 생성
+            string editorDir = dir.Replace("\\", "/");
 
-        string className = Path.GetFileNameWithoutExtension(basePath);
-        string rootNs = ResolveRootNamespace(targetDir);
+            string editorPath = Path.Combine(editorDir, $"{className}.Editor.cs").Replace("\\", "/");
 
-        File.WriteAllText(basePath,
-            File.ReadAllText(baseTemplate)
+            // 템플릿 존재 확인
+            if (!File.Exists(MONO_TEMPLATE) || !File.Exists(MONO_PARTIAL_TEMPLATE))
+            {
+                EditorUtility.DisplayDialog("Template Missing",
+                    $"템플릿을 찾을 수 없습니다.\n{MONO_TEMPLATE}\n{MONO_PARTIAL_TEMPLATE}",
+                    "OK");
+                return;
+            }
+
+            // 덮어쓰기 방지
+            if (File.Exists(basePath) || File.Exists(editorPath))
+            {
+                EditorUtility.DisplayDialog("Already Exists",
+                    $"이미 같은 이름의 파일이 존재합니다.\n{basePath}\n{editorPath}",
+                    "OK");
+                return;
+            }
+
+            // 네임스페이스 결정
+            string rootNs = ResolveRootNamespace(dir);
+
+            // 본 클래스 생성
+            string baseTxt = File.ReadAllText(MONO_TEMPLATE)
                 .Replace("#SCRIPTNAME#", className)
-                .Replace("#ROOTNAMESPACE#", rootNs));
+                .Replace("#ROOTNAMESPACE#", rootNs);
 
-        File.WriteAllText(editorPath,
-            File.ReadAllText(editorTemplate)
+            // 에디터 partial 생성
+            string editorTxt = File.ReadAllText(MONO_PARTIAL_TEMPLATE)
                 .Replace("#SCRIPTNAME#", className)
-                .Replace("#ROOTNAMESPACE#", rootNs));
+                .Replace("#ROOTNAMESPACE#", rootNs);
 
-        AssetDatabase.Refresh();
+            File.WriteAllText(basePath, baseTxt);
+            File.WriteAllText(editorPath, editorTxt);
+
+            AssetDatabase.ImportAsset(basePath);
+            AssetDatabase.ImportAsset(editorPath);
+            ProjectWindowUtil.ShowCreatedAsset(AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(basePath));
+
+            Debug.Log($"[Create] {className}.cs + Editor/{className}.Editor.cs 생성 완료");
+        }
     }
 
     /// <summary>
@@ -220,7 +319,6 @@ public static class SafeScriptCreator
         public override void Action(int instanceId, string pathName, string resourceFile)
         {
             string newName = Path.GetFileNameWithoutExtension(pathName);
-            CreateMonoWithPartial();
             Debug.Log($"새 파일 이름: {newName}");
         }
     }
@@ -230,6 +328,16 @@ public static class SafeScriptCreator
     private class AsmdefJson
     {
         public string rootNamespace;
+    }
+
+    /// <summary>
+    /// UTF-8 with BOM 저장 헬퍼
+    /// </summary>
+    private static void WriteAllTextUtf8Bom(string path, string text)
+    {
+        var utf8Bom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
+        using (var sw = new StreamWriter(path, false, utf8Bom))
+            sw.Write(text);
     }
 }
 #endif

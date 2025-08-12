@@ -5,15 +5,15 @@ using UnityEditor;
 namespace #ROOTNAMESPACE#
 {
     /// <summary>
-    /// #SCRIPTNAME#ÀÇ ¿¡µðÅÍ Àü¿ë À¯Æ¿/Å×½ºÆ® ÄÚµå.
-    /// - ºôµå¿¡ Æ÷ÇÔµÇÁö ¾ÊÀ½(#if UNITY_EDITOR)
-    /// - ¿øº» partial Å¬·¡½º¿Í ÇÕÃÄÁ® µ¿ÀÛ
+    /// #SCRIPTNAME#ì˜ ì—ë””í„° ì „ìš© ìœ í‹¸/í…ŒìŠ¤íŠ¸ ì½”ë“œ.
+    /// - ë¹Œë“œì— í¬í•¨ë˜ì§€ ì•ŠìŒ(#if UNITY_EDITOR)
+    /// - ì›ë³¸ partial í´ëž˜ìŠ¤ì™€ í•©ì³ì ¸ ë™ìž‘
     /// </summary>
     public partial class #SCRIPTNAME#
     {
-        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-        // ContextMenu: ÀÎ½ºÆåÅÍ ¿ìÅ¬¸¯ ¸Þ´º¿¡¼­ ½ÇÇà
-        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ContextMenu: ì¸ìŠ¤íŽ™í„° ìš°í´ë¦­ ë©”ë‰´ì—ì„œ ì‹¤í–‰
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [ContextMenu("TEST/Print State")]
         private void __Test_PrintState()
         {
@@ -36,23 +36,17 @@ namespace #ROOTNAMESPACE#
             }
         }
 
-        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-        // ¿¡µðÅÍ¿¡¼­¸¸ º¸Á¶µÇ´Â ¸Þ½ÃÁöµé (¼±ÅÃ)
-        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        // (ì„ íƒ) ì—ë””í„° ë³´ì¡° ë©”ì‹œì§€
         private void OnValidate()
         {
             if (!EditorTestConfig.Enabled) return;
-            // ÀÎ½ºÆåÅÍ °ªÀÌ ¹Ù²ð ¶§ ÇÑ ¹ø¾¿ È£ÃâµÊ
-            // Debug.Log("[Editor] OnValidate", this);
+            // ì¸ìŠ¤íŽ™í„° ê°’ ë³€ê²½ ì‹œ í˜¸ì¶œ
         }
 
         private void OnDrawGizmosSelected()
         {
             if (!EditorTestConfig.Enabled) return;
-            if (_pivot != null)
-            {
-                Gizmos.DrawWireSphere(_pivot.position, 0.2f);
-            }
+            if (_pivot != null) Gizmos.DrawWireSphere(_pivot.position, 0.2f);
         }
     }
 }
