@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c862358653259ba409de4b868220aa57, type: 3}
-  m_Name: SunDataSO
+  m_Name: EarthDataSO
   m_EditorClassIdentifier: 
-  _id: c12313f7a9ee4d4aa2b6644ac164b95a
-  _displayName: Sun
+  _id: 835c7e6ec86545aba1cd3d6b56f6623b
+  _displayName: Earth
   _description: 
-  planetName: Sun
-  radiusU: 10
+  planetName: Earth
+  radiusU: 0
   orbitRadiusU: 0
   orbitPeriodDays: 0
   rotationPeriodHours: 0

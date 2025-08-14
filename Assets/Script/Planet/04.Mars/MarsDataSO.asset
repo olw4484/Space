@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c862358653259ba409de4b868220aa57, type: 3}
-  m_Name: SunDataSO
+  m_Name: MarsDataSO
   m_EditorClassIdentifier: 
-  _id: c12313f7a9ee4d4aa2b6644ac164b95a
-  _displayName: Sun
+  _id: ce4254a032bc48c191485458c0a320ac
+  _displayName: Mars
   _description: 
-  planetName: Sun
-  radiusU: 10
+  planetName: Mars
+  radiusU: 0
   orbitRadiusU: 0
   orbitPeriodDays: 0
   rotationPeriodHours: 0
