@@ -25,10 +25,10 @@ namespace SpaceWorker
         private void __Test_PingPivot()
         {
             if (!EditorTestConfig.Enabled) return;
-            if (_pivot != null)
+            if (pivot != null)
             {
-                EditorGUIUtility.PingObject(_pivot);
-                Debug.Log("[TEST] Pivot ping!", _pivot);
+                EditorGUIUtility.PingObject(pivot);
+                Debug.Log("[TEST] Pivot ping!", pivot);
             }
             else
             {
@@ -46,7 +46,7 @@ namespace SpaceWorker
         private void OnDrawGizmosSelected()
         {
             if (!EditorTestConfig.Enabled) return;
-            if (_pivot != null) Gizmos.DrawWireSphere(_pivot.position, 0.2f);
+            if (pivot != null) Gizmos.DrawWireSphere(pivot.position, 0.2f);
         }
     }
 }
